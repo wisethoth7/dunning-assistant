@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dunning Assistant — Recovery Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #020C0C;
+    --surface: #061818;
+    --card: #0A2020;
+    --border: rgba(94,234,212,0.12);
+    --accent: #5EEAD4;
+    --accent2: #2DD4BF;
+    --green: #4ADE80;
+    --red: #F87171;
+    --yellow: #FBBF24;
+    --muted: #3a5a5a;
+    --text: #e0f2f1;
+    --text2: #7a9a9a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* SIDEBAR */
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 24px 0;
+    position: fixed; top: 0; left: 0; bottom: 0;
+  }
+  .logo {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .logo-name { font-size: 15px; font-weight: 800; color: var(--accent); letter-spacing: -0.3px; }
+  .logo-sub { font-size: 10px; color: var(--text2); letter-spacing: 1.5px; margin-top: 2px; }
+  .nav-item {
+    padding: 10px 20px; display: flex; align-items: center; gap: 10px;
+    color: var(--text2); font-size: 13px; font-weight: 500;
+    cursor: pointer; border-left: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .nav-item:hover, .nav-item.active {
+    color: var(--accent); border-left-color: var(--accent);
+    background: rgba(94,234,212,0.05);
+  }
+  .nav-icon { width: 16px; height: 16px; opacity: 0.7; }
+  .sidebar-bottom {
+    margin-top: auto; padding: 16px 20px;
+    border-top: 1px solid var(--border);
+  }
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green); display: inline-block;
+    margin-right: 6px; animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100%{opacity:1} 50%{opacity:0.4}
+  }
+  .status-text { font-size: 11px; color: var(--text2); }
+
+  /* MAIN */
+  .main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; }
+
+  /* TOPBAR */
+  .topbar {
+    padding: 16px 32px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--surface); position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-title { font-size: 16px; font-weight: 700; color: var(--text); }
+  .topbar-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .topbar-right { display: flex; gap: 10px; align-items: center; }
+  .badge {
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    padding: 4px 10px; border-radius: 20px;
+  }
+  .badge-green { background: rgba(74,222,128,0.12); color: var(--green); }
+  .badge-accent { background: rgba(94,234,212,0.12); color: var(--accent); }
+  .refresh-btn {
+    padding: 7px 14px; border: 1px solid var(--border); border-radius: 7px;
+    background: transparent; color: var(--text2); font-size: 12px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* CONTENT */
+  .content { padding: 28px 32px; flex: 1; }
+
+  /* STAT CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--accent2); }
+  .stat-label { font-size: 11px; color: var(--text2); letter-spacing: 0.5px; font-weight: 600; margin-bottom: 8px; }
+  .stat-value { font-size: 30px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.yellow { color: var(--yellow); }
+  .stat-value.red { color: var(--red); }
+  .stat-change { font-size: 11px; margin-top: 6px; }
+  .stat-change.up { color: var(--green); }
+  .stat-change.down { color: var(--red); }
+  .stat-change.neutral { color: var(--text2); }
+
+  /* GRID SECTIONS */
+  .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .grid-equal { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+  .section-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  }
+  .section-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .section-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .section-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .section-body { padding: 20px; }
+
+  /* CHART */
+  .chart-wrap { position: relative; height: 200px; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  th { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--text2);
+       padding: 8px 12px; text-align: left; }
+  tbody tr { border-bottom: 1px solid rgba(94,234,212,0.05); transition: background 0.1s; }
+  tbody tr:hover { background: rgba(94,234,212,0.03); }
+  td { padding: 12px 12px; font-size: 12.5px; }
+  .td-email { color: var(--text); font-weight: 500; }
+  .td-amount { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .td-muted { color: var(--text2); }
+
+  /* STATUS PILLS */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px; font-size: 10.5px; font-weight: 700;
+  }
+  .pill-green { background: rgba(74,222,128,0.12); color: var(--green); }
+  .pill-yellow { background: rgba(251,191,36,0.12); color: var(--yellow); }
+  .pill-red { background: rgba(248,113,113,0.12); color: var(--red); }
+  .pill-accent { background: rgba(94,234,212,0.12); color: var(--accent); }
+  .pill::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; }
+
+  /* RECOVERY RATE RING */
+  .ring-wrap { display: flex; align-items: center; justify-content: center; padding: 20px 0; }
+  .ring-inner { text-align: center; }
+  .ring-pct { font-size: 38px; font-weight: 900; color: var(--accent); letter-spacing: -2px; }
+  .ring-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  canvas.ring { display: block; margin: 0 auto; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 40px 20px; }
+  .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-title { font-size: 14px; color: var(--text2); font-weight: 600; }
+  .empty-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* TENANT SWITCHER */
+  .tenant-select {
+    padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); color: var(--text); font-size: 12px; outline: none; cursor: pointer;
+  }
+  .tenant-select:focus { border-color: var(--accent); }
+
+  /* LOADING */
+  .loading { display: flex; align-items: center; gap: 8px; color: var(--text2); font-size: 12px; padding: 20px; }
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* SETUP BANNER */
+  .setup-banner {
+    background: rgba(94,234,212,0.06); border: 1px solid var(--accent);
+    border-radius: 10px; padding: 16px 20px; margin-bottom: 20px;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .setup-icon { font-size: 20px; flex-shrink: 0; }
+  .setup-text h3 { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .setup-text p { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .setup-text code {
+    background: rgba(94,234,212,0.1); color: var(--accent);
+    padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 11px;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .stats-grid { grid-template-columns: repeat(2,1fr); }
+    .grid-2, .grid-equal { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SUPABASE CONFIG -->
+<script>
+const SUPABASE_URL = 'https://hvyfeebazmiqateniupm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2eWZlZWJhem1pcWF0ZW5pdXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTcwMDAwMDAsImV4cCI6MjAzMjU3NjAwMH0.placeholder';
+
+async function supabase(table, query = '') {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${query}`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch { return null; }
+}
+</script>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-name">Dunning Assistant</div>
+      <div class="logo-sub">NILE DREAMS DIGITAL</div>
+    </div>
+    <nav>
+      <div class="nav-item active">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Events Log
+      </div>
+      <div class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Analytics
+      </div>
+      <div class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Customers
+      </div>
+      <div class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Webhooks
+      </div>
+      <div class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M6.34 17.66l-1.41 1.41M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+        Settings
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <span class="status-dot"></span>
+      <span class="status-text">Webhook live</span>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Recovery Dashboard</div>
+        <div class="topbar-sub" id="last-updated">Loading data...</div>
+      </div>
+      <div class="topbar-right">
+        <select class="tenant-select" id="tenant-select">
+          <option value="all">All Tenants</option>
+        </select>
+        <span class="badge badge-green" id="stripe-status">Stripe Connected</span>
+        <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- SETUP BANNER (shown when no data) -->
+      <div class="setup-banner" id="setup-banner" style="display:none">
+        <div class="setup-icon">⚡</div>
+        <div class="setup-text">
+          <h3>Waiting for your first webhook event</h3>
+          <p>Your Stripe webhook is live at <code>dunning-webhook.vercel.app/webhook</code>.
+          Configure it in your Stripe Dashboard under Developers → Webhooks.
+          Watch for <code>invoice.payment_failed</code> events to appear here automatically.</p>
+        </div>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">REVENUE RECOVERED</div>
+          <div class="stat-value green" id="stat-recovered">$0</div>
+          <div class="stat-change neutral" id="stat-recovered-sub">this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">RECOVERY RATE</div>
+          <div class="stat-value accent" id="stat-rate">—</div>
+          <div class="stat-change neutral" id="stat-rate-sub">of failed payments</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">FAILED PAYMENTS</div>
+          <div class="stat-value yellow" id="stat-failed">0</div>
+          <div class="stat-change neutral" id="stat-failed-sub">total captured</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">ACTIVE RETRIES</div>
+          <div class="stat-value red" id="stat-active">0</div>
+          <div class="stat-change neutral">in dunning sequence</div>
+        </div>
+      </div>
+
+      <!-- CHART + RATE RING -->
+      <div class="grid-2">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Recovery Over Time</div>
+              <div class="section-sub">Monthly revenue recovered</div>
+            </div>
+          </div>
+          <div class="section-body">
+            <div class="chart-wrap">
+              <canvas id="recovery-chart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">Recovery Rate</div>
+          </div>
+          <div class="section-body">
+            <div class="ring-wrap">
+              <div>
+                <canvas class="ring" id="ring-chart" width="160" height="160"></canvas>
+                <div class="ring-inner" style="margin-top:-10px">
+                  <div class="ring-label" id="ring-label">No data yet</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EVENT LOG TABLE -->
+      <div class="section-card" style="margin-bottom:24px">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Dunning Events</div>
+            <div class="section-sub">All payment failure and recovery events</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <span class="badge badge-accent" id="event-count">0 events</span>
+          </div>
+        </div>
+        <div id="table-container">
+          <div class="loading"><div class="spinner"></div> Loading events...</div>
+        </div>
+      </div>
+
+      <!-- BOTTOM GRID -->
+      <div class="grid-equal">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">Email Sequence Status</div>
+          </div>
+          <div class="section-body" id="email-seq">
+            <div class="empty">
+              <div class="empty-icon">📧</div>
+              <div class="empty-title">No active sequences</div>
+              <div class="empty-sub">Email sequences start automatically on payment failure</div>
+            </div>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">Top At-Risk Customers</div>
+          </div>
+          <div class="section-body" id="at-risk">
+            <div class="empty">
+              <div class="empty-icon">⚠️</div>
+              <div class="empty-title">No at-risk customers</div>
+              <div class="empty-sub">Customers with 3+ failed retries will appear here</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// ─── CHART INSTANCES ───────────────────────────────────────────
+let recoveryChart = null;
+let ringChart = null;
+
+function initCharts() {
+  // Recovery Line Chart
+  const rCtx = document.getElementById('recovery-chart').getContext('2d');
+  recoveryChart = new Chart(rCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+      datasets: [{
+        label: 'Recovered ($)',
+        data: [0,0,0,0,0,0],
+        backgroundColor: 'rgba(94,234,212,0.15)',
+        borderColor: '#5EEAD4',
+        borderWidth: 2,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(94,234,212,0.05)' }, ticks: { color: '#7a9a9a', font: { size: 11 } } },
+        y: { grid: { color: 'rgba(94,234,212,0.05)' }, ticks: { color: '#7a9a9a', font: { size: 11 },
+              callback: v => '$' + v.toLocaleString() } }
+      }
+    }
+  });
+
+  // Doughnut ring
+  const ringCtx = document.getElementById('ring-chart').getContext('2d');
+  ringChart = new Chart(ringCtx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [0, 100],
+        backgroundColor: ['#5EEAD4', 'rgba(94,234,212,0.08)'],
+        borderWidth: 0,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: false, cutout: '78%',
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      animation: { animateRotate: true, duration: 800 }
+    }
+  });
+}
+
+// ─── DATA LOAD ─────────────────────────────────────────────────
+async function loadAll() {
+  document.getElementById('last-updated').textContent = 'Refreshing...';
+
+  // Try dunning_logs first, then dunning_events
+  let events = await supabase('dunning_logs', '?order=created_at.desc&limit=100');
+  if (!events || events.length === 0) {
+    events = await supabase('dunning_events', '?order=created_at.desc&limit=100');
+  }
+
+  const now = new Date();
+  document.getElementById('last-updated').textContent =
+    'Last updated: ' + now.toLocaleTimeString();
+
+  if (!events || events.length === 0) {
+    document.getElementById('setup-banner').style.display = 'flex';
+    document.getElementById('table-container').innerHTML = `
+      <div class="empty" style="padding:48px">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">No dunning events yet</div>
+        <div class="empty-sub">Connect your Stripe webhook to start tracking failed payments</div>
+      </div>`;
+    document.getElementById('event-count').textContent = '0 events';
+    return;
+  }
+
+  document.getElementById('setup-banner').style.display = 'none';
+  renderStats(events);
+  renderTable(events);
+  renderCharts(events);
+}
+
+function renderStats(events) {
+  const total = events.length;
+  const recovered = events.filter(e => e.recovered || e.status === 'recovered');
+  const active = events.filter(e => !e.recovered && e.status !== 'recovered' && e.status !== 'failed_final');
+  const totalAmt = recovered.reduce((s, e) => s + (e.amount_due || e.amount || 0), 0);
+  const rate = total > 0 ? Math.round((recovered.length / total) * 100) : 0;
+
+  document.getElementById('stat-recovered').textContent = '$' + (totalAmt / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('stat-rate').textContent = rate + '%';
+  document.getElementById('stat-failed').textContent = total;
+  document.getElementById('stat-active').textContent = active.length;
+  document.getElementById('event-count').textContent = total + ' events';
+
+  // Ring
+  if (ringChart) {
+    ringChart.data.datasets[0].data = [rate, 100 - rate];
+    ringChart.update();
+    document.getElementById('ring-label').textContent = rate + '% recovered';
+  }
+}
+
+function renderTable(events) {
+  if (events.length === 0) return;
+
+  const rows = events.slice(0, 50).map(e => {
+    const status = e.recovered || e.status === 'recovered' ? 'recovered'
+      : e.status === 'failed_final' ? 'failed'
+      : e.retry_count >= 3 ? 'at-risk' : 'retrying';
+
+    const pillClass = { recovered: 'pill-green', failed: 'pill-red', 'at-risk': 'pill-yellow', retrying: 'pill-accent' }[status];
+    const pillLabel = { recovered: '✓ Recovered', failed: '✗ Failed', 'at-risk': '⚠ At Risk', retrying: '↻ Retrying' }[status];
+
+    const amount = ((e.amount_due || e.amount || 0) / 100).toLocaleString('en-US', { style: 'currency', currency: 'usd' });
+    const date = new Date(e.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    return `<tr>
+      <td class="td-email">${e.customer_email || e.email || '—'}</td>
+      <td class="td-amount">${amount}</td>
+      <td><span class="pill ${pillClass}">${pillLabel}</span></td>
+      <td class="td-muted">${e.retry_count || 0} / 4</td>
+      <td class="td-muted">${date}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('table-container').innerHTML = `
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr>
+        <th>CUSTOMER EMAIL</th><th>AMOUNT</th><th>STATUS</th><th>RETRIES</th><th>DATE</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>`;
+}
+
+function renderCharts(events) {
+  if (!recoveryChart) return;
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthlyData = {};
+
+  events.filter(e => e.recovered || e.status === 'recovered').forEach(e => {
+    const d = new Date(e.recovered_at || e.updated_at || e.created_at);
+    const key = months[d.getMonth()];
+    monthlyData[key] = (monthlyData[key] || 0) + (e.amount_due || e.amount || 0) / 100;
+  });
+
+  const now = new Date();
+  const last6 = Array.from({length: 6}, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    return months[d.getMonth()];
+  });
+
+  recoveryChart.data.labels = last6;
+  recoveryChart.data.datasets[0].data = last6.map(m => monthlyData[m] || 0);
+  recoveryChart.update();
+}
+
+// ─── INIT ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  initCharts();
+  loadAll();
+  // Auto-refresh every 30 seconds
+  setInterval(loadAll, 30000);
+});
+</script>
+</body>
+</html>
