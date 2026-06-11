@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Update Payment Method</title>
+<style>
+:root{--bg:#020C0C;--surface:#061818;--card:#0A2020;--accent:#5EEAD4;--border:rgba(94,234,212,0.15);--text:#e0f2f1;--text2:#5a8a8a;--red:#F87171;--green:#4ADE80}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.wrap{width:100%;max-width:420px}
+.logo{text-align:center;margin-bottom:24px}
+.logo-name{font-size:16px;font-weight:800;color:var(--text2);letter-spacing:1px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.card-header{background:linear-gradient(135deg,#0F4F4A,#0A2020);padding:28px 28px 24px;text-align:center;border-bottom:1px solid var(--border)}
+.company-name{font-size:13px;color:var(--text2);margin-bottom:6px}
+.amount{font-size:40px;font-weight:900;color:var(--accent);letter-spacing:-2px}
+.amount-label{font-size:13px;color:var(--text2);margin-top:4px}
+.card-body{padding:28px}
+.status-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.2);
+  color:var(--red);font-size:11px;font-weight:700;padding:5px 12px;
+  border-radius:20px;margin-bottom:20px;letter-spacing:0.5px;
+}
+.status-pill::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+h2{font-size:18px;font-weight:800;margin-bottom:6px}
+p{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6}
+label{font-size:11px;font-weight:700;color:var(--text2);display:block;margin-bottom:5px;letter-spacing:0.3px}
+.input-wrap{position:relative;margin-bottom:14px}
+input{
+  width:100%;padding:11px 14px;background:var(--card);
+  border:1px solid var(--border);border-radius:9px;
+  color:var(--text);font-size:14px;outline:none;letter-spacing:0.5px;
+}
+input:focus{border-color:var(--accent)}
+input::placeholder{color:var(--text2)}
+.card-icon{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  font-size:18px;
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{
+  width:100%;padding:14px;background:var(--accent);color:#020C0C;
+  font-size:14px;font-weight:800;border-radius:9px;border:none;
+  cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn:hover{opacity:0.88;transform:translateY(-1px)}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.lock-note{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);margin-top:12px;justify-content:center}
+.divider{height:1px;background:var(--border);margin:20px 0}
+.success-state{text-align:center;padding:20px 0;display:none}
+.success-icon{font-size:48px;margin-bottom:12px}
+.success-title{font-size:20px;font-weight:800;color:var(--green);margin-bottom:8px}
+.success-sub{font-size:13px;color:var(--text2);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <div class="logo-name">DUNNING ASSISTANT · PAYMENT UPDATE</div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="company-name" id="company-name">Your Subscription</div>
+      <div class="amount" id="amount">$49</div>
+      <div class="amount-label">due · payment failed</div>
+    </div>
+    <div class="card-body">
+
+      <!-- PAYMENT FORM -->
+      <div id="payment-form">
+        <div class="status-pill">PAYMENT FAILED</div>
+        <h2>Update Your Card</h2>
+        <p>Your recent payment didn't go through. Update your payment method below to keep your subscription active.</p>
+
+        <label>CARD NUMBER</label>
+        <div class="input-wrap">
+          <input type="text" id="card-num" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCard(this)" inputmode="numeric">
+          <span class="card-icon" id="card-brand">💳</span>
+        </div>
+
+        <div class="grid2">
+          <div>
+            <label>EXPIRY DATE</label>
+            <input type="text" id="card-exp" placeholder="MM / YY" maxlength="7" oninput="formatExp(this)" inputmode="numeric">
+          </div>
+          <div>
+            <label>SECURITY CODE</label>
+            <input type="text" id="card-cvc" placeholder="CVC" maxlength="4" inputmode="numeric">
+          </div>
+        </div>
+
+        <label>NAME ON CARD</label>
+        <input type="text" id="card-name" placeholder="Full name">
+
+        <div class="divider"></div>
+
+        <button class="btn" id="submit-btn" onclick="submitPayment()">
+          🔒 Update Payment Method
+        </button>
+        <div class="lock-note">
+          🔒 256-bit SSL encryption · Your card is never stored on our servers
+        </div>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div class="success-state" id="success">
+        <div class="success-icon">✅</div>
+        <div class="success-title">Payment Updated!</div>
+        <div class="success-sub">Your payment method has been updated successfully. Your subscription will be charged on the next billing date.<br><br>A confirmation has been sent to your email address.</div>
+      </div>
+
+    </div>
+  </div>
+  <p style="text-align:center;margin-top:16px;font-size:11px;color:var(--text2)">
+    Questions? Contact <a href="mailto:support@niledreamsdigital.com" style="color:var(--accent)">support@niledreamsdigital.com</a>
+  </p>
+</div>
+
+<script>
+// Read token from URL params (e.g. ?token=abc123&company=Acme&amount=49)
+const params = new URLSearchParams(window.location.search);
+if(params.get('company')) document.getElementById('company-name').textContent = decodeURIComponent(params.get('company'));
+if(params.get('amount')) document.getElementById('amount').textContent = '$'+params.get('amount');
+
+function formatCard(el){
+  let v=el.value.replace(/\D/g,'').substring(0,16);
+  el.value=v.replace(/(.{4})/g,'$1 ').trim();
+  const brand=document.getElementById('card-brand');
+  if(v.startsWith('4')) brand.textContent='💳';
+  else if(/^5[1-5]/.test(v)) brand.textContent='💳';
+  else if(/^3[47]/.test(v)) brand.textContent='💳';
+  else brand.textContent='💳';
+}
+
+function formatExp(el){
+  let v=el.value.replace(/\D/g,'');
+  if(v.length>=2) v=v.substring(0,2)+' / '+v.substring(2,4);
+  el.value=v;
+}
+
+function submitPayment(){
+  const num=document.getElementById('card-num').value.replace(/\s/g,'');
+  const exp=document.getElementById('card-exp').value;
+  const cvc=document.getElementById('card-cvc').value;
+  const name=document.getElementById('card-name').value.trim();
+
+  if(num.length<16){alert('Please enter a valid card number.');return}
+  if(exp.length<7){alert('Please enter a valid expiry date.');return}
+  if(cvc.length<3){alert('Please enter a valid security code.');return}
+  if(!name){alert('Please enter the name on the card.');return}
+
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true;
+  btn.innerHTML='Processing...';
+
+  // Simulate API call
+  setTimeout(()=>{
+    document.getElementById('payment-form').style.display='none';
+    document.getElementById('success').style.display='block';
+  },2000);
+}
+</script>
+</body>
+</html>
