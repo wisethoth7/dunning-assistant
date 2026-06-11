@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dunning Email Sequence Preview</title>
+<style>
+body{background:#020C0C;color:#e0f2f1;font-family:-apple-system,Arial,sans-serif;padding:32px 20px;max-width:700px;margin:0 auto}
+h1{font-size:20px;font-weight:800;color:#5EEAD4;margin-bottom:6px}
+.sub{font-size:13px;color:#5a8a8a;margin-bottom:32px}
+.seq-item{background:#061818;border:1px solid rgba(94,234,212,.12);border-radius:12px;margin-bottom:14px;overflow:hidden}
+.seq-header{padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid rgba(94,234,212,.08)}
+.seq-num{width:32px;height:32px;border-radius:50%;background:rgba(94,234,212,.1);border:1px solid rgba(94,234,212,.2);color:#5EEAD4;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.seq-info{flex:1}
+.seq-title{font-size:13px;font-weight:700;color:#e0f2f1}
+.seq-timing{font-size:11px;color:#5a8a8a;margin-top:2px}
+.seq-type{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px}
+.type-email{background:rgba(94,234,212,.1);color:#5EEAD4}
+.type-sms{background:rgba(74,222,128,.1);color:#4ADE80}
+.seq-body{padding:20px 18px;display:none}
+.seq-body.open{display:block}
+.email-preview{background:#0A2020;border:1px solid rgba(94,234,212,.08);border-radius:10px;overflow:hidden}
+.email-header{padding:14px 18px;border-bottom:1px solid rgba(94,234,212,.08)}
+.email-field{font-size:12px;color:#5a8a8a;padding:3px 0}
+.email-field strong{color:#7a9a9a;margin-right:8px}
+.email-subject{font-size:13px;font-weight:700;color:#e0f2f1;margin-top:6px}
+.email-body{padding:20px 18px}
+.email-body p{font-size:13px;line-height:1.7;color:#7a9a9a;margin-bottom:12px}
+.email-body p .hi{color:#e0f2f1;font-weight:600}
+.email-cta{display:inline-block;padding:12px 24px;background:#5EEAD4;color:#020C0C;font-size:13px;font-weight:700;border-radius:8px;text-decoration:none;margin:8px 0 16px}
+.sms-preview{background:#0A2020;border:1px solid rgba(74,222,128,.12);border-radius:10px;padding:18px}
+.sms-bubble{background:#1A3A2A;border-radius:14px 14px 14px 3px;padding:12px 14px;font-size:13px;color:#b0d4b0;line-height:1.6;display:inline-block;max-width:90%}
+.tag{display:inline-block;background:rgba(94,234,212,.08);border:1px solid rgba(94,234,212,.15);color:#5EEAD4;font-size:10px;padding:2px 8px;border-radius:4px;font-family:monospace}
+.stats-row{display:flex;gap:16px;padding:14px 18px;border-top:1px solid rgba(94,234,212,.08)}
+.stat{text-align:center;flex:1}
+.stat-val{font-size:18px;font-weight:800;color:#5EEAD4}
+.stat-label{font-size:10px;color:#3e6060;margin-top:2px}
+</style>
+</head>
+<body>
+<h1>Dunning Recovery Sequence</h1>
+<p class="sub">5-touch sequence: 4 emails + 1 SMS · Sends automatically on payment failure</p>
+
+<!-- EMAIL 1 -->
+<div class="seq-item">
+  <div class="seq-header" onclick="toggle(this)">
+    <div class="seq-num">1</div>
+    <div class="seq-info">
+      <div class="seq-title">Soft Reminder — Payment Didn't Go Through</div>
+      <div class="seq-timing">Sends: Immediately on failure</div>
+    </div>
+    <span class="seq-type type-email">EMAIL</span>
+  </div>
+  <div class="seq-body">
+    <div class="email-preview">
+      <div class="email-header">
+        <div class="email-field"><strong>From:</strong> <tag>{{business_name}}</tag> via Dunning Assistant</div>
+        <div class="email-field"><strong>To:</strong> <tag>{{customer_email}}</tag></div>
+        <div class="email-subject">Quick heads up about your <tag>{{business_name}}</tag> subscription</div>
+      </div>
+      <div class="email-body">
+        <p><span class="hi">Hi <tag>{{first_name}}</tag>,</span></p>
+        <p>We weren't able to process your payment of <tag>{{amount}}</tag> for your <tag>{{plan_name}}</tag> subscription. This happens sometimes — expired cards, bank holds, or a billing address mismatch.</p>
+        <p>No action is needed on your account yet. We'll automatically retry the payment in 3 days. But if you'd like to update your payment method now, you can do it here:</p>
+        <a href="{{update_payment_url}}" class="email-cta">Update Payment Method</a>
+        <p>Your access to <tag>{{business_name}}</tag> is uninterrupted for now.</p>
+        <p>Questions? Just reply to this email.</p>
+        <p>— The <tag>{{business_name}}</tag> Team</p>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val">68%</div><div class="stat-label">Open rate</div></div>
+      <div class="stat"><div class="stat-val">24%</div><div class="stat-label">Click rate</div></div>
+      <div class="stat"><div class="stat-val">18%</div><div class="stat-label">Recovery rate</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SMS -->
+<div class="seq-item">
+  <div class="seq-header" onclick="toggle(this)">
+    <div class="seq-num">2</div>
+    <div class="seq-info">
+      <div class="seq-title">SMS Nudge</div>
+      <div class="seq-timing">Sends: Day 2 (if not resolved)</div>
+    </div>
+    <span class="seq-type type-sms">SMS</span>
+  </div>
+  <div class="seq-body">
+    <div class="sms-preview">
+      <div class="sms-bubble">
+        Hi <tag>{{first_name}}</tag>, your <tag>{{business_name}}</tag> payment of <tag>{{amount}}</tag> needs attention. Update your card here to keep your account active: <tag>{{short_link}}</tag> — Reply STOP to opt out.
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val">98%</div><div class="stat-label">Open rate</div></div>
+      <div class="stat"><div class="stat-val">31%</div><div class="stat-label">Click rate</div></div>
+      <div class="stat"><div class="stat-val">22%</div><div class="stat-label">Recovery rate</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL 2 -->
+<div class="seq-item">
+  <div class="seq-header" onclick="toggle(this)">
+    <div class="seq-num">3</div>
+    <div class="seq-info">
+      <div class="seq-title">Second Attempt — Action Required</div>
+      <div class="seq-timing">Sends: Day 5 (if not resolved)</div>
+    </div>
+    <span class="seq-type type-email">EMAIL</span>
+  </div>
+  <div class="seq-body">
+    <div class="email-preview">
+      <div class="email-header">
+        <div class="email-field"><strong>From:</strong> <tag>{{business_name}}</tag> via Dunning Assistant</div>
+        <div class="email-subject">Action required: Your <tag>{{business_name}}</tag> payment failed again</div>
+      </div>
+      <div class="email-body">
+        <p><span class="hi">Hi <tag>{{first_name}}</tag>,</span></p>
+        <p>We tried processing your payment of <tag>{{amount}}</tag> again and it was unsuccessful. Your subscription is still active, but we need you to update your payment information to avoid any interruption.</p>
+        <p>This takes less than a minute:</p>
+        <a href="{{update_payment_url}}" class="email-cta">Update Payment Now →</a>
+        <p>If you believe this is a mistake or your bank is blocking the charge, please contact your bank and reference transaction ID <tag>{{stripe_invoice_id}}</tag>.</p>
+        <p>We'll make one more attempt in 5 days. If we're unable to process payment by then, your subscription will be paused.</p>
+        <p>— The <tag>{{business_name}}</tag> Team</p>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val">54%</div><div class="stat-label">Open rate</div></div>
+      <div class="stat"><div class="stat-val">19%</div><div class="stat-label">Click rate</div></div>
+      <div class="stat"><div class="stat-val">14%</div><div class="stat-label">Recovery rate</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL 3 -->
+<div class="seq-item">
+  <div class="seq-header" onclick="toggle(this)">
+    <div class="seq-num">4</div>
+    <div class="seq-info">
+      <div class="seq-title">Final Warning — Subscription at Risk</div>
+      <div class="seq-timing">Sends: Day 10 (if not resolved)</div>
+    </div>
+    <span class="seq-type type-email">EMAIL</span>
+  </div>
+  <div class="seq-body">
+    <div class="email-preview">
+      <div class="email-header">
+        <div class="email-field"><strong>Subject:</strong> <span style="color:#F87171">⚠️ Your <tag>{{business_name}}</tag> subscription will be paused in 48 hours</span></div>
+      </div>
+      <div class="email-body">
+        <p><span class="hi">Hi <tag>{{first_name}}</tag>,</span></p>
+        <p>We've made multiple attempts to collect your payment of <tag>{{amount}}</tag>, and we've been unable to process it. <strong style="color:#F87171">Your subscription will be automatically paused in 48 hours</strong> if we don't hear from you.</p>
+        <p>You'll lose access to:</p>
+        <p style="padding:12px 16px;background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.15);border-radius:8px;color:#F87171">
+          <tag>{{feature_list}}</tag>
+        </p>
+        <a href="{{update_payment_url}}" class="email-cta" style="background:#F87171;color:#fff">Keep My Subscription Active →</a>
+        <p>If you'd like to cancel instead of update, you can do that from your account settings — no hard feelings.</p>
+        <p>— The <tag>{{business_name}}</tag> Team</p>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val">71%</div><div class="stat-label">Open rate</div></div>
+      <div class="stat"><div class="stat-val">28%</div><div class="stat-label">Click rate</div></div>
+      <div class="stat"><div class="stat-val">21%</div><div class="stat-label">Recovery rate</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL 4 -->
+<div class="seq-item">
+  <div class="seq-header" onclick="toggle(this)">
+    <div class="seq-num">5</div>
+    <div class="seq-info">
+      <div class="seq-title">Account Paused — Reactivation Link</div>
+      <div class="seq-timing">Sends: Day 14 (subscription paused)</div>
+    </div>
+    <span class="seq-type type-email">EMAIL</span>
+  </div>
+  <div class="seq-body">
+    <div class="email-preview">
+      <div class="email-header">
+        <div class="email-field"><strong>Subject:</strong> Your <tag>{{business_name}}</tag> account has been paused — reactivate anytime</div>
+      </div>
+      <div class="email-body">
+        <p><span class="hi">Hi <tag>{{first_name}}</tag>,</span></p>
+        <p>Your subscription has been paused due to an unresolved payment of <tag>{{amount}}</tag>. <strong style="color:#e0f2f1">Your data and settings are fully preserved</strong> — nothing was deleted.</p>
+        <p>When you're ready to come back, reactivating takes one click:</p>
+        <a href="{{update_payment_url}}" class="email-cta">Reactivate My Account</a>
+        <p>If you're experiencing financial difficulties and would like to discuss a payment plan or temporary discount, reply to this email and we'll work something out.</p>
+        <p>We hope to see you back.</p>
+        <p>— The <tag>{{business_name}}</tag> Team</p>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val">44%</div><div class="stat-label">Open rate</div></div>
+      <div class="stat"><div class="stat-val">15%</div><div class="stat-label">Click rate</div></div>
+      <div class="stat"><div class="stat-val">9%</div><div class="stat-label">Recovery rate</div></div>
+    </div>
+  </div>
+</div>
+
+<div style="background:rgba(94,234,212,.06);border:1px solid rgba(94,234,212,.15);border-radius:12px;padding:20px;margin-top:24px;text-align:center">
+  <div style="font-size:22px;font-weight:800;color:#5EEAD4">Combined recovery rate: 62%</div>
+  <div style="font-size:13px;color:#5a8a8a;margin-top:6px">Across the full 5-touch sequence · Industry average: 38% (Stripe only)</div>
+</div>
+
+<script>
+function toggle(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+// Open first one by default
+document.querySelector('.seq-body').classList.add('open');
+</script>
+</body>
+</html>
