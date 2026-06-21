@@ -287,6 +287,12 @@ async function joinWaitlist(){
       },
       body: JSON.stringify({ email, source: 'marketing_page' })
     });
+    // Welcome email (non-blocking)
+    fetch('https://hvyfeebazmiqateniupm.supabase.co/functions/v1/send-welcome-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: email, product: 'dunning' })
+    }).catch(() => {});
     document.getElementById('wl-email').value='';
     document.getElementById('wl-success').style.display='block';
     toast("You're on the list!");
@@ -300,6 +306,13 @@ function toast(msg){
   el.textContent=msg; el.classList.add('show');
   clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3000);
 }
+</script>
+<script src="ra-widget.js"></script>
+<script>
+initRa({
+  accentColor: '#10b981',
+  systemPrompt: 'You are Ra, an AI support agent for Dunning Assistant — an automated payment recovery tool that connects to Stripe and sends dunning sequences via email and SMS. Help users with: how to connect Stripe, how the dunning sequence works (day 1, 7, 14, 30), customizing email templates, interpreting recovery stats, and plan options (Basic $19/mo, Pro $49/mo). For billing questions, direct to thothwisdom7@gmail.com.'
+});
 </script>
 </body>
 </html>
