@@ -87,6 +87,19 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
 
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1F2937;color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;transition:all .3s;z-index:999;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:600px){
+  .hero{padding:40px 20px 32px}
+  .hero-sub{font-size:16px}
+  .sequence{padding:40px 20px}
+  .features{padding:40px 20px}
+  .pricing{padding:40px 20px}
+  .waitlist{padding:40px 20px}
+  .form-row{flex-direction:column}
+  .form-row input{width:100%}
+  .form-row button{width:100%}
+  footer{padding:24px 20px}
+  h1{font-size:clamp(28px,8vw,40px)}
+}
 </style>
 </head>
 <body>
