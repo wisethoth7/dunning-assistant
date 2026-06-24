@@ -4,4 +4,4 @@ Disallow: /dashboard.html
 Disallow: /update-payment.html
 Disallow: /email-sequence.html
 
-Sitemap: https://wisethoth7.github.io/dunning-assistant/sitemap.xml
+Sitemap: https://dunning.niledreamsdigital.com/sitemap.xml

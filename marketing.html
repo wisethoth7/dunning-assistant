@@ -106,7 +106,7 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
 
 <nav class="nav">
   <div class="logo">Dunning<span>.</span></div>
-  <a href="#waitlist" class="nav-cta">Get Early Access</a>
+  <a href="https://buy.stripe.com/00wbIU2zyds16SJ4Wf18c04" class="nav-cta" target="_blank" rel="noopener">Get Started</a>
 </nav>
 
 <!-- HERO -->
@@ -115,7 +115,7 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
   <h1>Get paid.<br><span>Automatically.</span></h1>
   <p class="hero-sub">Stop sending awkward follow-up emails. Dunning Assistant handles overdue invoices for you — politely, persistently, and automatically.</p>
   <div class="hero-ctas">
-    <a href="#waitlist" class="btn-primary">Start Free — No Card Needed</a>
+    <a href="https://buy.stripe.com/00wbIU2zyds16SJ4Wf18c04" class="btn-primary" target="_blank" rel="noopener">Get Started</a>
     <a href="#how-it-works" class="btn-secondary">See How It Works</a>
   </div>
   <div class="hero-note">Used by freelancers, consultants, and service businesses · Starts at $19/mo</div>
@@ -222,7 +222,7 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
           <li>Stripe integration</li>
           <li>Recovery dashboard</li>
         </ul>
-        <a href="#waitlist" class="plan-btn" style="background:#F3F4F6;color:#374151">Join Waitlist</a>
+        <a href="https://buy.stripe.com/00wbIU2zyds16SJ4Wf18c04" class="plan-btn" style="background:#F3F4F6;color:#374151" target="_blank" rel="noopener">Get Started</a>
       </div>
 
       <div class="plan popular">
@@ -237,7 +237,7 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
           <li>Multiple Stripe accounts</li>
           <li>Priority support</li>
         </ul>
-        <a href="#waitlist" class="plan-btn">Join Waitlist</a>
+        <a href="https://buy.stripe.com/fZudR26PO9bLa4Vagz18c03" class="plan-btn" target="_blank" rel="noopener">Get Started</a>
       </div>
 
       <div class="plan">
@@ -251,27 +251,17 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
           <li>API access</li>
           <li>Dedicated support</li>
         </ul>
-        <a href="#waitlist" class="plan-btn">Join Waitlist</a>
+        <a href="https://buy.stripe.com/bJefZaa209bLa4V9cv18c00" class="plan-btn" target="_blank" rel="noopener">Get Started</a>
       </div>
 
     </div>
   </div>
 </section>
 
-<!-- WAITLIST -->
-<section class="waitlist" id="waitlist">
-  <h2>Join the waitlist</h2>
-  <p>We're in private beta. Join the waitlist and get early access at founding-member pricing — locked in for life.</p>
-  <div class="form-row">
-    <input type="email" id="wl-email" placeholder="your@email.com">
-    <button onclick="joinWaitlist()">Join Now</button>
-  </div>
-  <div class="success-msg" id="wl-success">✓ You're on the list! We'll be in touch soon.</div>
-</section>
 
 <footer>
   <div style="margin-bottom:8px">
-    <a href="mailto:thothwisdom7@gmail.com">thothwisdom7@gmail.com</a>
+    <a href="mailto:support@niledreamsdigital.com">support@niledreamsdigital.com</a>
     <span style="margin:0 8px">·</span>
     <a href="#">Privacy Policy</a>
     <span style="margin:0 8px">·</span>
@@ -280,51 +270,11 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
   <div>© 2026 Dunning Assistant · Nile Dreams Digital</div>
 </footer>
 
-<div class="toast" id="toast"></div>
-
-<script>
-const SUPABASE_URL = 'https://hvyfeebazmiqateniupm.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2eWZlZWJhem1pcWF0ZW5pdXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMTI2MTcsImV4cCI6MjA5NTY4ODYxN30.89qqEshOwp1bU2AQbzSpZ36_TuqP2jVULo_9Ug-S9_c';
-
-async function joinWaitlist(){
-  const email = document.getElementById('wl-email').value.trim();
-  if(!email || !email.includes('@')){ toast('Enter a valid email.'); return; }
-  try{
-    await fetch(SUPABASE_URL+'/rest/v1/dunning_waitlist',{
-      method:'POST',
-      headers:{
-        'apikey':SUPABASE_ANON,
-        'Authorization':'Bearer '+SUPABASE_ANON,
-        'Content-Type':'application/json',
-        'Prefer':'return=minimal'
-      },
-      body: JSON.stringify({ email, source: 'marketing_page' })
-    });
-    // Welcome email (non-blocking)
-    fetch('https://hvyfeebazmiqateniupm.supabase.co/functions/v1/send-welcome-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: email, product: 'dunning' })
-    }).catch(() => {});
-    document.getElementById('wl-email').value='';
-    document.getElementById('wl-success').style.display='block';
-    toast("You're on the list!");
-  }catch(err){
-    toast("Something went wrong — try again.");
-  }
-}
-
-function toast(msg){
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.classList.add('show');
-  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3000);
-}
-</script>
 <script src="ra-widget.js"></script>
 <script>
 initRa({
   accentColor: '#10b981',
-  systemPrompt: 'You are Ra, an AI support agent for Dunning Assistant — an automated payment recovery tool that connects to Stripe and sends dunning sequences via email and SMS. Help users with: how to connect Stripe, how the dunning sequence works (day 1, 7, 14, 30), customizing email templates, interpreting recovery stats, and plan options (Basic $19/mo, Pro $49/mo). For billing questions, direct to thothwisdom7@gmail.com.'
+  systemPrompt: 'You are Ra, an AI support agent for Dunning Assistant — an automated payment recovery tool that connects to Stripe and sends dunning sequences via email and SMS. Help users with: how to connect Stripe, how the dunning sequence works (day 1, 7, 14, 30), customizing email templates, interpreting recovery stats, and plan options (Basic $19/mo, Pro $49/mo). For billing questions, direct to support@niledreamsdigital.com.'
 });
 </script>
 </body>
