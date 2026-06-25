@@ -303,10 +303,23 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
       <label class="auth-label">Business Name</label>
       <input class="auth-fi" type="text" id="auth-biz" placeholder="Your business or agency name" autocomplete="organization">
     </div>
+    <div id="dunning-credentials-fields">
     <label class="auth-label">Email</label>
     <input class="auth-fi" type="email" id="auth-email" placeholder="you@yourbusiness.com" autocomplete="email">
     <label class="auth-label">Password</label>
     <input class="auth-fi" type="password" id="auth-password" placeholder="8+ characters" autocomplete="current-password">
+    <div id="dunning-forgot-link" style="display:none;text-align:right;margin:-10px 0 14px">
+      <a href="#" onclick="showForgot();return false;" style="color:#6B7280;font-size:12px">Forgot password?</a>
+    </div>
+    </div><!-- /dunning-credentials-fields -->
+    <div id="dunning-forgot-section" style="display:none">
+      <p style="font-size:13px;color:#6B7280;margin-bottom:14px">Enter your email and we'll send a reset link.</p>
+      <input class="auth-fi" type="email" id="dunning-reset-email" placeholder="you@yourbusiness.com">
+      <button class="auth-submit" id="dunning-reset-btn" onclick="sendResetEmail()">Send Reset Email</button>
+      <div style="text-align:center;margin-top:8px">
+        <a href="#" onclick="hideForgot();return false;" style="color:#6B7280;font-size:12px">← Back to login</a>
+      </div>
+    </div>
     <button class="auth-submit" id="auth-btn" onclick="submitAuth()">Create free account</button>
     <div class="auth-msg" id="auth-msg"></div>
   </div>
@@ -319,8 +332,15 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let authMode = 'signup';
 
-// Redirect if already logged in
+const _recoveryMode = new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
+sb.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    closeAuth();
+    document.getElementById('dunning-pw-recovery-overlay').style.display = 'flex';
+  }
+});
 (async () => {
+  if (_recoveryMode) return;
   const { data: { session } } = await sb.auth.getSession();
   if (session) window.location.replace('dashboard.html');
 })();
@@ -345,6 +365,7 @@ function switchAuthTab(mode) {
   document.getElementById('auth-btn').textContent = isSignup ? 'Create free account' : 'Log in';
   document.getElementById('auth-msg').textContent = '';
   document.getElementById('auth-msg').className = 'auth-msg';
+  hideForgot();
 }
 
 function setAuthMsg(msg, type) {
@@ -412,7 +433,67 @@ async function submitAuth() {
 
   window.location.replace('dashboard.html');
 }
+
+function showForgot() {
+  document.getElementById('dunning-credentials-fields').style.display = 'none';
+  document.getElementById('auth-btn').style.display = 'none';
+  document.getElementById('auth-msg').textContent = '';
+  document.getElementById('auth-msg').className = 'auth-msg';
+  document.getElementById('dunning-forgot-section').style.display = 'block';
+  document.getElementById('dunning-reset-email').value = document.getElementById('auth-email').value;
+}
+
+function hideForgot() {
+  document.getElementById('dunning-forgot-section').style.display = 'none';
+  document.getElementById('dunning-credentials-fields').style.display = '';
+  document.getElementById('auth-btn').style.display = '';
+  document.getElementById('dunning-forgot-link').style.display = authMode === 'login' ? 'block' : 'none';
+}
+
+async function sendResetEmail() {
+  const email = document.getElementById('dunning-reset-email').value.trim();
+  const btn = document.getElementById('dunning-reset-btn');
+  if (!email) { setAuthMsg('Please enter your email.', 'error'); return; }
+  btn.disabled = true; btn.textContent = 'Sending...';
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href.split('#')[0] });
+  btn.disabled = false; btn.textContent = 'Send Reset Email';
+  setAuthMsg(error ? (error.message || 'Could not send reset email.') : 'Reset link sent — check your email!', error ? 'error' : 'success');
+}
+
+async function submitDunningNewPassword() {
+  const pw = document.getElementById('dunning-new-pw-input').value;
+  const btn = document.getElementById('dunning-new-pw-btn');
+  const msgEl = document.getElementById('dunning-new-pw-msg');
+  if (pw.length < 8) { msgEl.textContent = 'Password must be at least 8 characters.'; msgEl.className = 'auth-msg error'; msgEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Updating...';
+  const { error } = await sb.auth.updateUser({ password: pw });
+  btn.disabled = false; btn.textContent = 'Update Password';
+  if (error) {
+    msgEl.textContent = error.message || 'Could not update password.';
+    msgEl.className = 'auth-msg error';
+  } else {
+    msgEl.textContent = 'Password updated! Redirecting...';
+    msgEl.className = 'auth-msg success';
+    setTimeout(() => window.location.replace('dashboard.html'), 1500);
+  }
+  msgEl.style.display = 'block';
+}
 </script>
+
+<div id="dunning-pw-recovery-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:999;overflow-y:auto;align-items:flex-start;justify-content:center">
+  <div style="max-width:480px;width:100%;margin:0 auto;padding:80px 24px 40px">
+    <div class="badge" style="margin-bottom:24px">PASSWORD RESET</div>
+    <h1 style="font-size:36px;font-weight:900;line-height:1.1;margin-bottom:12px;color:#111827">Set your new <span style="color:#2563EB">password.</span></h1>
+    <p style="font-size:16px;color:#4B5563;margin-bottom:32px">Enter a new password for your Dunning Assistant account.</p>
+    <div style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:16px;padding:28px">
+      <label class="auth-label">New Password</label>
+      <input class="auth-fi" type="password" id="dunning-new-pw-input" placeholder="8+ characters">
+      <button class="auth-submit" id="dunning-new-pw-btn" onclick="submitDunningNewPassword()">Update Password</button>
+      <div class="auth-msg" id="dunning-new-pw-msg" style="display:none;margin-top:12px"></div>
+    </div>
+  </div>
+</div>
+
 <script src="ra-widget.js"></script>
 <script>
 initRa({
