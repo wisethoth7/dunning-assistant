@@ -8,6 +8,7 @@
 <meta property="og:title" content="Dunning Assistant — Get Paid. Automatically.">
 <meta property="og:description" content="Automatic payment reminders for freelancers and service businesses. Email · SMS · WhatsApp. Starts at $19/mo.">
 <meta property="og:type" content="website">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:#111827}
@@ -87,6 +88,25 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
 
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1F2937;color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;transition:all .3s;z-index:999;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* AUTH MODAL */
+.auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.auth-overlay.open{opacity:1;pointer-events:all}
+.auth-box{background:#fff;border-radius:18px;padding:36px 32px;width:100%;max-width:400px;position:relative;box-shadow:0 24px 64px rgba(0,0,0,.18)}
+.auth-box h2{font-size:22px;font-weight:900;margin-bottom:6px;color:#111827}
+.auth-box p{font-size:14px;color:#6B7280;margin-bottom:22px;line-height:1.5}
+.auth-tabs-row{display:flex;gap:0;margin-bottom:22px;border:1.5px solid #E5E7EB;border-radius:10px;overflow:hidden}
+.auth-tab-btn{flex:1;padding:10px;font-size:13px;font-weight:700;background:#F9FAFB;color:#374151;border:none;cursor:pointer;transition:all .15s}
+.auth-tab-btn.active{background:#2563EB;color:#fff}
+.auth-fi{width:100%;padding:12px 14px;border:1.5px solid #E5E7EB;border-radius:10px;font-size:14px;margin-bottom:14px;font-family:inherit;outline:none;transition:border-color .2s}
+.auth-fi:focus{border-color:#2563EB}
+.auth-fi::placeholder{color:#9CA3AF}
+.auth-label{font-size:13px;font-weight:700;color:#374151;display:block;margin-bottom:6px}
+.auth-submit{width:100%;padding:14px;background:#2563EB;color:#fff;font-size:15px;font-weight:700;border:none;border-radius:10px;cursor:pointer;transition:opacity .2s}
+.auth-submit:hover{opacity:.9}
+.auth-submit:disabled{opacity:.5;cursor:default}
+.auth-msg{font-size:13px;font-weight:600;text-align:center;margin-top:12px;min-height:18px;line-height:1.5}
+.auth-msg.error{color:#DC2626}
+.auth-msg.success{color:#16A34A}
 @media(max-width:600px){
   .hero{padding:40px 20px 32px}
   .hero-sub{font-size:16px}
@@ -106,7 +126,7 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
 
 <nav class="nav">
   <div class="logo">Dunning<span>.</span></div>
-  <a href="https://buy.stripe.com/00wbIU2zyds16SJ4Wf18c04" class="nav-cta" target="_blank" rel="noopener">Get Started</a>
+  <button class="nav-cta" onclick="openAuth('signup')">Get Started</button>
 </nav>
 
 <!-- HERO -->
@@ -115,7 +135,7 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
   <h1>Get paid.<br><span>Automatically.</span></h1>
   <p class="hero-sub">Stop sending awkward follow-up emails. Dunning Assistant handles overdue invoices for you — politely, persistently, and automatically.</p>
   <div class="hero-ctas">
-    <a href="https://buy.stripe.com/00wbIU2zyds16SJ4Wf18c04" class="btn-primary" target="_blank" rel="noopener">Get Started</a>
+    <button class="btn-primary" onclick="openAuth('signup')">Get Started</button>
     <a href="#how-it-works" class="btn-secondary">See How It Works</a>
   </div>
   <div class="hero-note">Used by freelancers, consultants, and service businesses · Starts at $19/mo</div>
@@ -222,7 +242,7 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
           <li>Stripe integration</li>
           <li>Recovery dashboard</li>
         </ul>
-        <a href="https://buy.stripe.com/00wbIU2zyds16SJ4Wf18c04" class="plan-btn" style="background:#F3F4F6;color:#374151" target="_blank" rel="noopener">Get Started</a>
+        <button class="plan-btn" style="background:#F3F4F6;color:#374151;border:none;cursor:pointer;width:100%" onclick="openAuth('signup')">Get Started</button>
       </div>
 
       <div class="plan popular">
@@ -237,7 +257,7 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
           <li>Multiple Stripe accounts</li>
           <li>Priority support</li>
         </ul>
-        <a href="https://buy.stripe.com/fZudR26PO9bLa4Vagz18c03" class="plan-btn" target="_blank" rel="noopener">Get Started</a>
+        <button class="plan-btn" style="border:none;cursor:pointer;width:100%" onclick="openAuth('signup')">Get Started</button>
       </div>
 
       <div class="plan">
@@ -251,7 +271,7 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
           <li>API access</li>
           <li>Dedicated support</li>
         </ul>
-        <a href="https://buy.stripe.com/bJefZaa209bLa4V9cv18c00" class="plan-btn" target="_blank" rel="noopener">Get Started</a>
+        <button class="plan-btn" style="border:none;cursor:pointer;width:100%" onclick="openAuth('signup')">Get Started</button>
       </div>
 
     </div>
@@ -270,11 +290,134 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
   <div>© 2026 Dunning Assistant · Nile Dreams Digital</div>
 </footer>
 
+<!-- AUTH MODAL -->
+<div class="auth-overlay" id="authOverlay" onclick="if(event.target.id==='authOverlay')closeAuth()">
+  <div class="auth-box">
+    <h2>Get started free</h2>
+    <p>Create your account to start recovering missed payments automatically.</p>
+    <div class="auth-tabs-row">
+      <button class="auth-tab-btn active" id="atab-signup" onclick="switchAuthTab('signup')">Create account</button>
+      <button class="auth-tab-btn" id="atab-login" onclick="switchAuthTab('login')">Log in</button>
+    </div>
+    <div id="auth-signup-fields">
+      <label class="auth-label">Business Name</label>
+      <input class="auth-fi" type="text" id="auth-biz" placeholder="Your business or agency name" autocomplete="organization">
+    </div>
+    <label class="auth-label">Email</label>
+    <input class="auth-fi" type="email" id="auth-email" placeholder="you@yourbusiness.com" autocomplete="email">
+    <label class="auth-label">Password</label>
+    <input class="auth-fi" type="password" id="auth-password" placeholder="8+ characters" autocomplete="current-password">
+    <button class="auth-submit" id="auth-btn" onclick="submitAuth()">Create free account</button>
+    <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://hvyfeebazmiqateniupm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2eWZlZWJhem1pcWF0ZW5pdXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMTI2MTcsImV4cCI6MjA5NTY4ODYxN30.89qqEshOwp1bU2AQbzSpZ36_TuqP2jVULo_9Ug-S9_c';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let authMode = 'signup';
+
+// Redirect if already logged in
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) window.location.replace('dashboard.html');
+})();
+
+function openAuth(mode) {
+  authMode = mode || 'signup';
+  switchAuthTab(authMode);
+  document.getElementById('authOverlay').classList.add('open');
+}
+
+function closeAuth() {
+  document.getElementById('authOverlay').classList.remove('open');
+  document.getElementById('auth-msg').textContent = '';
+}
+
+function switchAuthTab(mode) {
+  authMode = mode;
+  const isSignup = mode === 'signup';
+  document.getElementById('atab-signup').classList.toggle('active', isSignup);
+  document.getElementById('atab-login').classList.toggle('active', !isSignup);
+  document.getElementById('auth-signup-fields').style.display = isSignup ? '' : 'none';
+  document.getElementById('auth-btn').textContent = isSignup ? 'Create free account' : 'Log in';
+  document.getElementById('auth-msg').textContent = '';
+  document.getElementById('auth-msg').className = 'auth-msg';
+}
+
+function setAuthMsg(msg, type) {
+  const el = document.getElementById('auth-msg');
+  el.textContent = msg;
+  el.className = 'auth-msg ' + type;
+}
+
+async function submitAuth() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const btn = document.getElementById('auth-btn');
+
+  if (!email || !password) { setAuthMsg('Please fill in all fields.', 'error'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Please wait...';
+  setAuthMsg('', '');
+
+  if (authMode === 'login') {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      setAuthMsg(error.message || 'Login failed. Check your credentials.', 'error');
+      btn.disabled = false; btn.textContent = 'Log in';
+    } else {
+      window.location.replace('dashboard.html');
+    }
+    return;
+  }
+
+  // SIGNUP
+  if (password.length < 8) {
+    setAuthMsg('Password must be at least 8 characters.', 'error');
+    btn.disabled = false; btn.textContent = 'Create free account';
+    return;
+  }
+  const businessName = document.getElementById('auth-biz').value.trim();
+  if (!businessName) {
+    setAuthMsg('Please enter your business name.', 'error');
+    btn.disabled = false; btn.textContent = 'Create free account';
+    return;
+  }
+
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if (error) {
+    setAuthMsg(error.message || 'Sign up failed. Please try again.', 'error');
+    btn.disabled = false; btn.textContent = 'Create free account';
+    return;
+  }
+
+  if (data.user && !data.session) {
+    setAuthMsg('Check your email to confirm your account, then come back to log in.', 'success');
+    btn.disabled = false; btn.textContent = 'Create free account';
+    return;
+  }
+
+  // Session exists — create tenant row (ONE RULE)
+  const { error: tenantErr } = await sb.from('tenants').insert([{
+    user_id: data.user.id,
+    email: email,
+    business_name: businessName,
+    plan: 'free'
+  }]);
+  if (tenantErr) console.warn('Could not create tenant row:', tenantErr.message);
+
+  window.location.replace('dashboard.html');
+}
+</script>
 <script src="ra-widget.js"></script>
 <script>
 initRa({
   accentColor: '#10b981',
-  systemPrompt: 'You are Ra, an AI support agent for Dunning Assistant — an automated payment recovery tool that connects to Stripe and sends dunning sequences via email and SMS. Help users with: how to connect Stripe, how the dunning sequence works (day 1, 7, 14, 30), customizing email templates, interpreting recovery stats, and plan options (Basic $19/mo, Pro $49/mo). For billing questions, direct to support@niledreamsdigital.com.'
+  systemPrompt: 'You are Ra, an AI support agent for Dunning Assistant — an automated payment recovery tool that connects to Stripe and sends dunning sequences via email and SMS. Help users with: how to connect Stripe, how the dunning sequence works (day 1, 7, 14, 30), customizing email templates, interpreting recovery stats, and plan options (Starter $19/mo, Pro $49/mo, Business $99/mo). For billing questions, direct to support@niledreamsdigital.com.'
 });
 </script>
 </body>

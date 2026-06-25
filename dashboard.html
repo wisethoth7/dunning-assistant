@@ -213,24 +213,20 @@
 </head>
 <body>
 
-<!-- SUPABASE CONFIG -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 const SUPABASE_URL = 'https://hvyfeebazmiqateniupm.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2eWZlZWJhem1pcWF0ZW5pdXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTcwMDAwMDAsImV4cCI6MjAzMjU3NjAwMH0.placeholder';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2eWZlZWJhem1pcWF0ZW5pdXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMTI2MTcsImV4cCI6MjA5NTY4ODYxN30.89qqEshOwp1bU2AQbzSpZ36_TuqP2jVULo_9Ug-S9_c';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-async function supabase(table, query = '') {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${query}`, {
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch { return null; }
-}
+let _currentUser = null;
+let _tenantId = null;
+
+const STRIPE_PLANS = {
+  starter: 'https://buy.stripe.com/00wbIU2zyds16SJ4Wf18c04',
+  pro:     'https://buy.stripe.com/fZudR26PO9bLa4Vagz18c03',
+  business:'https://buy.stripe.com/bJefZaa209bLa4V9cv18c00'
+};
 </script>
 
 <div class="layout">
@@ -280,11 +276,10 @@ async function supabase(table, query = '') {
         <div class="topbar-sub" id="last-updated">Loading data...</div>
       </div>
       <div class="topbar-right">
-        <select class="tenant-select" id="tenant-select">
-          <option value="all">All Tenants</option>
-        </select>
-        <span class="badge badge-green" id="stripe-status">Stripe Connected</span>
+        <span class="badge badge-green" id="stripe-status">Connected</span>
+        <button class="refresh-btn" onclick="openBilling()" style="color:var(--accent);border-color:var(--accent)">⬆ Upgrade</button>
         <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+        <button class="refresh-btn" id="logout-btn" onclick="doSignOut()" style="color:var(--red);border-color:rgba(248,113,113,.3)">Log Out</button>
       </div>
     </div>
 
@@ -461,10 +456,16 @@ function initCharts() {
 async function loadAll() {
   document.getElementById('last-updated').textContent = 'Refreshing...';
 
-  // Try dunning_logs first, then dunning_events
-  let events = await supabase('dunning_logs', '?order=created_at.desc&limit=100');
+  let events = null;
+  if (_tenantId) {
+    const { data } = await sb.from('dunning_customers').select('*')
+      .eq('tenant_id', _tenantId).order('created_at', { ascending: false }).limit(100);
+    events = data;
+  }
   if (!events || events.length === 0) {
-    events = await supabase('dunning_events', '?order=created_at.desc&limit=100');
+    const { data } = await sb.from('dunning_events').select('*')
+      .order('created_at', { ascending: false }).limit(100);
+    events = data;
   }
 
   const now = new Date();
@@ -567,13 +568,87 @@ function renderCharts(events) {
   recoveryChart.update();
 }
 
+// ─── AUTH + BILLING HELPERS ────────────────────────────────────
+function patchBillingLinks(user) {
+  const params = '?client_reference_id=' + encodeURIComponent(user.id)
+    + '&prefilled_email=' + encodeURIComponent(user.email);
+  document.querySelectorAll('.billing-link').forEach(el => {
+    el.setAttribute('href', el.dataset.base + params);
+  });
+}
+
+async function doSignOut() {
+  await sb.auth.signOut();
+  window.location.replace('marketing.html');
+}
+
+function openBilling() {
+  document.getElementById('billing-modal').classList.add('open');
+}
+function closeBilling() {
+  document.getElementById('billing-modal').classList.remove('open');
+}
+
 // ─── INIT ──────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.replace('marketing.html'); return; }
+
+  _currentUser = session.user;
+
+  const { data: tenant } = await sb.from('tenants')
+    .select('id,business_name,plan,email')
+    .eq('user_id', session.user.id)
+    .maybeSingle();
+
+  if (tenant) {
+    _tenantId = tenant.id;
+    document.querySelector('.topbar-title').textContent = tenant.business_name || 'Recovery Dashboard';
+  }
+  patchBillingLinks(session.user);
+  document.querySelector('.topbar-sub').textContent = session.user.email;
+
   initCharts();
   loadAll();
-  // Auto-refresh every 30 seconds
   setInterval(loadAll, 30000);
 });
+</script>
+<!-- BILLING MODAL -->
+<div id="billing-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center">
+  <div style="background:#0A2020;border:1px solid rgba(94,234,212,.2);border-radius:18px;padding:36px;max-width:640px;width:calc(100% - 40px);position:relative">
+    <button onclick="closeBilling()" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
+    <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px">UPGRADE YOUR PLAN</div>
+    <h2 style="font-size:22px;font-weight:800;margin-bottom:6px;color:var(--text)">Choose a plan</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:28px">All plans include email · SMS · auto-stop on payment. <a href="mailto:support@niledreamsdigital.com" style="color:var(--accent)">Questions?</a></p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px">
+        <div style="font-size:11px;font-weight:800;color:var(--text2);letter-spacing:.5px;margin-bottom:6px">STARTER</div>
+        <div style="font-size:28px;font-weight:900;color:var(--text);margin-bottom:4px">$19<span style="font-size:13px;color:var(--text2);font-weight:400">/mo</span></div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Up to 25 clients<br>Email + SMS</div>
+        <a class="billing-link" data-base="https://buy.stripe.com/00wbIU2zyds16SJ4Wf18c04" href="https://buy.stripe.com/00wbIU2zyds16SJ4Wf18c04" target="_blank" rel="noopener" style="display:block;text-align:center;padding:10px;background:rgba(94,234,212,.1);border:1px solid var(--accent);color:var(--accent);border-radius:8px;font-size:13px;font-weight:700;text-decoration:none">Get Starter</a>
+      </div>
+      <div style="background:var(--surface);border:2px solid var(--accent);border-radius:12px;padding:20px;position:relative">
+        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--bg);padding:3px 12px;border-radius:20px;font-size:10px;font-weight:800">POPULAR</div>
+        <div style="font-size:11px;font-weight:800;color:var(--accent);letter-spacing:.5px;margin-bottom:6px">PRO</div>
+        <div style="font-size:28px;font-weight:900;color:var(--text);margin-bottom:4px">$49<span style="font-size:13px;color:var(--text2);font-weight:400">/mo</span></div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Up to 100 clients<br>Email + SMS + WhatsApp</div>
+        <a class="billing-link" data-base="https://buy.stripe.com/fZudR26PO9bLa4Vagz18c03" href="https://buy.stripe.com/fZudR26PO9bLa4Vagz18c03" target="_blank" rel="noopener" style="display:block;text-align:center;padding:10px;background:var(--accent);color:var(--bg);border-radius:8px;font-size:13px;font-weight:700;text-decoration:none">Upgrade to Pro</a>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px">
+        <div style="font-size:11px;font-weight:800;color:var(--text2);letter-spacing:.5px;margin-bottom:6px">BUSINESS</div>
+        <div style="font-size:28px;font-weight:900;color:var(--text);margin-bottom:4px">$99<span style="font-size:13px;color:var(--text2);font-weight:400">/mo</span></div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Unlimited clients<br>White-label + API</div>
+        <a class="billing-link" data-base="https://buy.stripe.com/bJefZaa209bLa4V9cv18c00" href="https://buy.stripe.com/bJefZaa209bLa4V9cv18c00" target="_blank" rel="noopener" style="display:block;text-align:center;padding:10px;background:rgba(94,234,212,.1);border:1px solid var(--accent);color:var(--accent);border-radius:8px;font-size:13px;font-weight:700;text-decoration:none">Get Business</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+// Show billing modal as flex when open class is added
+const _bm = document.getElementById('billing-modal');
+new MutationObserver(() => {
+  _bm.style.display = _bm.classList.contains('open') ? 'flex' : 'none';
+}).observe(_bm, { attributes: true, attributeFilter: ['class'] });
 </script>
 <script src="ra-widget.js"></script>
 <script>
