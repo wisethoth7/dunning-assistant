@@ -416,6 +416,13 @@ async function submitAuth() {
     return;
   }
 
+  // Fire the branded welcome email (non-blocking — don't hold up signup)
+  if (data.user) {
+    sb.functions.invoke('send-welcome-email', {
+      body: { to: email, name: businessName, product: 'dunning', plan: 'free' }
+    }).catch(() => {});
+  }
+
   if (data.user && !data.session) {
     setAuthMsg('Check your email to confirm your account, then come back to log in.', 'success');
     btn.disabled = false; btn.textContent = 'Create free account';
@@ -455,7 +462,7 @@ async function sendResetEmail() {
   const btn = document.getElementById('dunning-reset-btn');
   if (!email) { setAuthMsg('Please enter your email.', 'error'); return; }
   btn.disabled = true; btn.textContent = 'Sending...';
-  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href.split('#')[0] });
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://dunning.niledreamsdigital.com/reset-password' });
   btn.disabled = false; btn.textContent = 'Send Reset Email';
   setAuthMsg(error ? (error.message || 'Could not send reset email.') : 'Reset link sent — check your email!', error ? 'error' : 'success');
 }
