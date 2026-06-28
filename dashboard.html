@@ -237,27 +237,27 @@ const STRIPE_PLANS = {
       <div class="logo-sub">NILE DREAMS DIGITAL</div>
     </div>
     <nav>
-      <div class="nav-item active" onclick="navTo('top', this)">
+      <div class="nav-item active" data-view="dashboard" onclick="showView('dashboard', this)">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
         Dashboard
       </div>
-      <div class="nav-item" onclick="navTo('sec-events', this)">
+      <div class="nav-item" data-view="events" onclick="showView('events', this)">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
         Events Log
       </div>
-      <div class="nav-item" onclick="navTo('sec-analytics', this)">
+      <div class="nav-item" data-view="analytics" onclick="showView('analytics', this)">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         Analytics
       </div>
-      <div class="nav-item" onclick="navTo('sec-customers', this)">
+      <div class="nav-item" data-view="customers" onclick="showView('customers', this)">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Customers
       </div>
-      <div class="nav-item" onclick="showWebhookInfo(this)">
+      <div class="nav-item" data-view="webhooks" onclick="showView('webhooks', this)">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
         Webhooks
       </div>
-      <div class="nav-item" onclick="openBilling();setActiveNav(this)">
+      <div class="nav-item" data-view="settings" onclick="showView('settings', this)">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M6.34 17.66l-1.41 1.41M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
         Settings
       </div>
@@ -297,7 +297,7 @@ const STRIPE_PLANS = {
       </div>
 
       <!-- STAT CARDS -->
-      <div class="stats-grid">
+      <div class="stats-grid" id="sec-stats">
         <div class="stat-card">
           <div class="stat-label">REVENUE RECOVERED</div>
           <div class="stat-value green" id="stat-recovered">$0</div>
@@ -396,6 +396,63 @@ const STRIPE_PLANS = {
         </div>
       </div>
 
+      <!-- WEBHOOKS VIEW -->
+      <div id="sec-webhooks" style="display:none">
+        <div class="section-card" style="margin-bottom:24px">
+          <div class="section-header"><div><div class="section-title">Stripe Webhook</div><div class="section-sub">Connect Stripe so failed payments flow in automatically</div></div></div>
+          <div class="section-body" style="font-size:13px;color:var(--text2);line-height:1.8">
+            <div style="margin-bottom:14px">Add this endpoint in your Stripe Dashboard under <strong style="color:var(--text)">Developers → Webhooks → Add endpoint</strong>:</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:18px">
+              <code id="webhook-url" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--accent);font-size:13px">https://hvyfeebazmiqateniupm.supabase.co/functions/v1/stripe-webhook</code>
+              <button class="refresh-btn" onclick="copyWebhookUrl()">Copy</button>
+            </div>
+            <div style="margin-bottom:8px;color:var(--text)">Select these events to listen for:</div>
+            <ul style="margin:0 0 8px 18px">
+              <li><code>invoice.payment_failed</code></li>
+              <li><code>invoice.payment_succeeded</code></li>
+              <li><code>customer.subscription.updated</code></li>
+            </ul>
+            <div>Once saved, failed payments appear in <strong style="color:var(--text)">Events Log</strong> automatically.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS VIEW -->
+      <div id="sec-settings" style="display:none">
+        <div class="section-card" style="margin-bottom:20px">
+          <div class="section-header"><div><div class="section-title">Account Profile</div><div class="section-sub">Your business details</div></div></div>
+          <div class="section-body">
+            <label style="display:block;font-size:12px;color:var(--text2);font-weight:700;margin-bottom:6px">Business name</label>
+            <input id="set-business" type="text" placeholder="Your business name" style="width:100%;max-width:420px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit;margin-bottom:14px">
+            <label style="display:block;font-size:12px;color:var(--text2);font-weight:700;margin-bottom:6px">Account email</label>
+            <input id="set-email" type="email" disabled style="width:100%;max-width:420px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:14px;font-family:inherit;margin-bottom:16px">
+            <div><button class="refresh-btn" style="color:var(--accent);border-color:var(--accent)" onclick="saveSettings()">Save profile</button></div>
+          </div>
+        </div>
+        <div class="section-card" style="margin-bottom:20px">
+          <div class="section-header"><div><div class="section-title">Stripe Connection</div><div class="section-sub">Where your payment events come from</div></div></div>
+          <div class="section-body" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="font-size:13px;color:var(--text2)">Connect Stripe via the webhook endpoint to start tracking failed payments.</div>
+            <button class="refresh-btn" onclick="showView('webhooks', document.querySelector('.nav-item[data-view=webhooks]'))">Set up webhook →</button>
+          </div>
+        </div>
+        <div class="section-card" style="margin-bottom:20px">
+          <div class="section-header"><div><div class="section-title">Alert Preferences</div><div class="section-sub">When to email you</div></div></div>
+          <div class="section-body">
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);cursor:pointer;margin-bottom:10px"><input type="checkbox" id="set-alert-failed" checked> Email me when a payment fails</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);cursor:pointer"><input type="checkbox" id="set-alert-recovered" checked> Email me when a payment is recovered</label>
+            <div style="font-size:11px;color:var(--text2);margin-top:10px">Alerts are sent to your account email.</div>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="section-header"><div><div class="section-title">Plan</div><div class="section-sub" id="set-plan-label">—</div></div></div>
+          <div class="section-body" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="font-size:13px;color:var(--text2)">Need more capacity? View upgrade options.</div>
+            <button class="refresh-btn" style="color:var(--accent);border-color:var(--accent)" onclick="openBilling()">Upgrade plan →</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </main>
 </div>
@@ -452,22 +509,58 @@ function initCharts() {
   });
 }
 
-// ─── NAV ───────────────────────────────────────────────────────
+// ─── NAV / VIEWS ───────────────────────────────────────────────
 function setActiveNav(el) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
 }
-function navTo(id, el) {
-  setActiveNav(el);
-  if (id === 'top') { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
-  const sec = document.getElementById(id);
-  if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-function showWebhookInfo(el) {
-  setActiveNav(el);
+const VIEW_SECTIONS = {
+  dashboard: ['sec-stats','sec-analytics','sec-events','sec-customers'],
+  events:    ['sec-events'],
+  analytics: ['sec-stats','sec-analytics'],
+  customers: ['sec-customers'],
+  webhooks:  ['sec-webhooks'],
+  settings:  ['sec-settings'],
+};
+const ALL_SECTIONS = ['sec-stats','sec-analytics','sec-events','sec-customers','sec-webhooks','sec-settings'];
+function showView(view, el) {
+  setActiveNav(el || document.querySelector(`.nav-item[data-view="${view}"]`));
+  ALL_SECTIONS.forEach(id => { const s = document.getElementById(id); if (s) s.style.display = 'none'; });
+  (VIEW_SECTIONS[view] || VIEW_SECTIONS.dashboard).forEach(id => { const s = document.getElementById(id); if (s) s.style.display = ''; });
+  // The "no data" setup banner only belongs on data views, and only loadAll controls it.
   const banner = document.getElementById('setup-banner');
-  banner.style.display = 'flex';
-  banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (banner && (view === 'settings' || view === 'webhooks' || view === 'analytics')) banner.style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (view === 'settings') loadSettings();
+}
+
+function copyWebhookUrl() {
+  const url = document.getElementById('webhook-url').textContent.trim();
+  navigator.clipboard.writeText(url).then(() => { try { showToastDun('Webhook URL copied'); } catch(e){} });
+}
+function showToastDun(msg) {
+  document.getElementById('last-updated').textContent = msg;
+}
+
+// ─── SETTINGS ──────────────────────────────────────────────────
+async function loadSettings() {
+  try {
+    document.getElementById('set-email').value = _currentUser?.email || '';
+    if (!_tenantId) return;
+    const { data } = await sb.from('tenants').select('business_name,plan,email').eq('id', _tenantId).maybeSingle();
+    if (data) {
+      document.getElementById('set-business').value = data.business_name || '';
+      if (!document.getElementById('set-email').value) document.getElementById('set-email').value = data.email || '';
+      document.getElementById('set-plan-label').textContent = 'Current plan: ' + (data.plan || 'free');
+    }
+  } catch (e) { console.error('loadSettings', e); }
+}
+async function saveSettings() {
+  if (!_tenantId) { showToastDun('No account loaded'); return; }
+  const name = document.getElementById('set-business').value.trim();
+  const { error } = await sb.from('tenants').update({ business_name: name }).eq('id', _tenantId);
+  showToastDun(error ? 'Could not save settings' : 'Settings saved');
+  if (!error) document.querySelector('.topbar-title').textContent = name || 'Recovery Dashboard';
 }
 
 // ─── DATA LOAD ─────────────────────────────────────────────────
