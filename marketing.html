@@ -429,14 +429,9 @@ async function submitAuth() {
     return;
   }
 
-  // Session exists — create tenant row (ONE RULE)
-  const { error: tenantErr } = await sb.from('tenants').insert([{
-    user_id: data.user.id,
-    email: email,
-    business_name: businessName,
-    plan: 'free'
-  }]);
-  if (tenantErr) console.warn('Could not create tenant row:', tenantErr.message);
+  // Session exists — create tenant row via RPC (ONE RULE)
+  const { error: tenantErr } = await sb.rpc('ensure_tenant', { p_business_name: businessName || null });
+  if (tenantErr) console.warn('ensure_tenant failed:', tenantErr.message);
 
   window.location.replace('dashboard.html');
 }

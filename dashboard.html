@@ -596,6 +596,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   _currentUser = session.user;
 
+  // Belt-and-suspenders: make sure this user has a tenant row before we query.
+  await sb.rpc('ensure_tenant', { p_business_name: null }).catch(() => {});
+
   const { data: tenant } = await sb.from('tenants')
     .select('id,business_name,plan,email')
     .eq('user_id', session.user.id)
