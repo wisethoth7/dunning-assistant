@@ -237,27 +237,27 @@ const STRIPE_PLANS = {
       <div class="logo-sub">NILE DREAMS DIGITAL</div>
     </div>
     <nav>
-      <div class="nav-item active">
+      <div class="nav-item active" onclick="navTo('top', this)">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
         Dashboard
       </div>
-      <div class="nav-item">
+      <div class="nav-item" onclick="navTo('sec-events', this)">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
         Events Log
       </div>
-      <div class="nav-item">
+      <div class="nav-item" onclick="navTo('sec-analytics', this)">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         Analytics
       </div>
-      <div class="nav-item">
+      <div class="nav-item" onclick="navTo('sec-customers', this)">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Customers
       </div>
-      <div class="nav-item">
+      <div class="nav-item" onclick="showWebhookInfo(this)">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
         Webhooks
       </div>
-      <div class="nav-item">
+      <div class="nav-item" onclick="openBilling();setActiveNav(this)">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M6.34 17.66l-1.41 1.41M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
         Settings
       </div>
@@ -321,7 +321,7 @@ const STRIPE_PLANS = {
       </div>
 
       <!-- CHART + RATE RING -->
-      <div class="grid-2">
+      <div class="grid-2" id="sec-analytics">
         <div class="section-card">
           <div class="section-header">
             <div>
@@ -353,7 +353,7 @@ const STRIPE_PLANS = {
       </div>
 
       <!-- EVENT LOG TABLE -->
-      <div class="section-card" style="margin-bottom:24px">
+      <div class="section-card" style="margin-bottom:24px" id="sec-events">
         <div class="section-header">
           <div>
             <div class="section-title">Dunning Events</div>
@@ -369,7 +369,7 @@ const STRIPE_PLANS = {
       </div>
 
       <!-- BOTTOM GRID -->
-      <div class="grid-equal">
+      <div class="grid-equal" id="sec-customers">
         <div class="section-card">
           <div class="section-header">
             <div class="section-title">Email Sequence Status</div>
@@ -452,35 +452,68 @@ function initCharts() {
   });
 }
 
+// ─── NAV ───────────────────────────────────────────────────────
+function setActiveNav(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+function navTo(id, el) {
+  setActiveNav(el);
+  if (id === 'top') { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  const sec = document.getElementById(id);
+  if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function showWebhookInfo(el) {
+  setActiveNav(el);
+  const banner = document.getElementById('setup-banner');
+  banner.style.display = 'flex';
+  banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 // ─── DATA LOAD ─────────────────────────────────────────────────
+function showEventsEmpty() {
+  document.getElementById('setup-banner').style.display = 'flex';
+  document.getElementById('table-container').innerHTML = `
+    <div class="empty" style="padding:48px">
+      <div class="empty-icon">📭</div>
+      <div class="empty-title">No dunning events yet</div>
+      <div class="empty-sub">Connect your Stripe webhook to start tracking failed payments</div>
+    </div>`;
+  document.getElementById('event-count').textContent = '0 events';
+}
+
 async function loadAll() {
   document.getElementById('last-updated').textContent = 'Refreshing...';
 
   let events = null;
-  if (_tenantId) {
-    const { data } = await sb.from('dunning_customers').select('*')
-      .eq('tenant_id', _tenantId).order('created_at', { ascending: false }).limit(100);
-    events = data;
-  }
-  if (!events || events.length === 0) {
-    const { data } = await sb.from('dunning_events').select('*')
-      .order('created_at', { ascending: false }).limit(100);
-    events = data;
+  try {
+    if (_tenantId) {
+      const { data, error } = await sb.from('dunning_customers').select('*')
+        .eq('tenant_id', _tenantId).order('created_at', { ascending: false }).limit(100);
+      if (error) throw error;
+      events = data;
+    }
+    if (!events || events.length === 0) {
+      const { data, error } = await sb.from('dunning_events').select('*')
+        .order('created_at', { ascending: false }).limit(100);
+      if (error) throw error;
+      events = data;
+    }
+  } catch (err) {
+    // DB returns instantly when healthy — any throw here is a query/RLS issue.
+    // Never leave an infinite spinner: fall back to the empty state.
+    console.error('loadAll failed:', err);
+    document.getElementById('last-updated').textContent =
+      'Last updated: ' + new Date().toLocaleTimeString();
+    showEventsEmpty();
+    return;
   }
 
-  const now = new Date();
   document.getElementById('last-updated').textContent =
-    'Last updated: ' + now.toLocaleTimeString();
+    'Last updated: ' + new Date().toLocaleTimeString();
 
   if (!events || events.length === 0) {
-    document.getElementById('setup-banner').style.display = 'flex';
-    document.getElementById('table-container').innerHTML = `
-      <div class="empty" style="padding:48px">
-        <div class="empty-icon">📭</div>
-        <div class="empty-title">No dunning events yet</div>
-        <div class="empty-sub">Connect your Stripe webhook to start tracking failed payments</div>
-      </div>`;
-    document.getElementById('event-count').textContent = '0 events';
+    showEventsEmpty();
     return;
   }
 
