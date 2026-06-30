@@ -722,13 +722,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   _currentUser = session.user;
 
-  // Belt-and-suspenders: make sure this user has a tenant row before we query.
-  await sb.rpc('ensure_tenant', { p_business_name: null }).catch(() => {});
-
-  const { data: tenant } = await sb.from('tenants')
-    .select('id,business_name,plan,email')
-    .eq('user_id', session.user.id)
-    .maybeSingle();
+  // Ensure the tenant row exists, then use the row the RPC returns.
+  // NOTE: Supabase query builders (sb.rpc/sb.from) are thenables with NO .catch()
+  // method — calling .catch() on them throws synchronously and previously aborted
+  // this whole mount handler before loadAll() ran (data stuck on "loading...").
+  // Always await inside try/catch instead.
+  let tenant = null;
+  try {
+    const { data } = await sb.rpc('ensure_tenant', { p_business_name: null });
+    tenant = Array.isArray(data) ? data[0] : data;
+  } catch (e) { console.error('ensure_tenant failed', e); }
+  if (!tenant) {
+    try {
+      const { data } = await sb.from('tenants')
+        .select('id,business_name,plan,email').eq('user_id', session.user.id).maybeSingle();
+      tenant = data;
+    } catch (e) { console.error('tenant read failed', e); }
+  }
 
   if (tenant) {
     _tenantId = tenant.id;
@@ -738,7 +748,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelector('.topbar-sub').textContent = session.user.email;
 
   initCharts();
-  loadAll();
+  loadAll();            // fires on mount — no manual refresh needed
   setInterval(loadAll, 30000);
 });
 </script>
