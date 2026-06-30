@@ -715,6 +715,17 @@ function closeBilling() {
   document.getElementById('billing-modal').classList.remove('open');
 }
 
+// ─── APP-ROOT AUTH ─────────────────────────────────────────────
+// Single source of truth: the header account control (business email + Log Out)
+// is rendered from the session here — on mount and on every auth-state change —
+// so it persists across refresh with no per-component auth checks.
+function renderAccountControl(user) {
+  const sub = document.querySelector('.topbar-sub');
+  if (sub) sub.textContent = user ? user.email : '';
+  const lo = document.getElementById('logout-btn');
+  if (lo) lo.style.display = user ? '' : 'none';
+}
+
 // ─── INIT ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await sb.auth.getSession();
@@ -745,7 +756,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelector('.topbar-title').textContent = tenant.business_name || 'Recovery Dashboard';
   }
   patchBillingLinks(session.user);
-  document.querySelector('.topbar-sub').textContent = session.user.email;
+  renderAccountControl(session.user);
+
+  // App-root auth subscription: react to any auth-state change (sign-out in another
+  // tab, token loss). Header stays in sync; logged-out users go back to login.
+  sb.auth.onAuthStateChange((event, s) => {
+    if (event === 'SIGNED_OUT' || !s) { window.location.replace('marketing.html'); return; }
+    _currentUser = s.user;
+    renderAccountControl(s.user);
+    patchBillingLinks(s.user);
+  });
 
   initCharts();
   loadAll();            // fires on mount — no manual refresh needed
