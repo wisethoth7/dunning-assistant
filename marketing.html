@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dunning Assistant — Get Paid. Automatically.</title>
-<meta name="description" content="Stop chasing overdue invoices. Dunning Assistant sends automatic payment reminders by email, SMS, and WhatsApp — so you get paid without the awkward follow-ups. $19/mo.">
+<meta name="description" content="Dunning Assistant chases overdue invoices for you with automatic email reminders, connected to Stripe. In development — join the list to hear when it opens. $19/mo.">
 <meta property="og:title" content="Dunning Assistant — Get Paid. Automatically.">
-<meta property="og:description" content="Automatic payment reminders for freelancers and service businesses. Email · SMS · WhatsApp. Starts at $19/mo.">
+<meta property="og:description" content="Automatic email payment reminders for freelancers and service businesses, connected to Stripe. In development.">
 <meta property="og:type" content="website">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
@@ -131,22 +131,22 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
 
 <!-- HERO -->
 <section class="hero">
-  <div class="badge">📧 Email · 💬 SMS · 📱 WhatsApp · Works with Stripe</div>
+  <div class="badge">📧 Email reminders · Works with Stripe · 🚧 In development</div>
   <h1>Get paid.<br><span>Automatically.</span></h1>
-  <p class="hero-sub">Stop sending awkward follow-up emails. Dunning Assistant handles overdue invoices for you — politely, persistently, and automatically.</p>
+  <p class="hero-sub">Stop sending awkward follow-up emails. Dunning Assistant is being built to chase overdue invoices for you — politely, persistently, and automatically. Connect Stripe today to see what you are owed; the reminders come next.</p>
   <div class="hero-ctas">
     <button class="btn-primary" onclick="openAuth('signup')">Get Started</button>
     <a href="#how-it-works" class="btn-secondary">See How It Works</a>
   </div>
-  <div class="hero-note">Used by freelancers, consultants, and service businesses · Starts at $19/mo</div>
+  <div class="hero-note">Built for freelancers, consultants and service businesses · In development, not yet taking payment</div>
 </section>
 
 <!-- HOW IT WORKS -->
 <section class="sequence" id="how-it-works">
   <div class="sequence-inner">
     <div class="section-label">How It Works</div>
-    <h2>A 4-step sequence that actually gets you paid</h2>
-    <p class="section-sub">Connect Stripe. We watch for failed payments and overdue invoices, then send the right message at the right time — so you don't have to.</p>
+    <h2>The 4-step sequence we are building</h2>
+    <p class="section-sub">Connect Stripe and we watch for failed payments and overdue invoices today. Sending the right message at the right time is the part still being built — here is how it will work.</p>
     <div class="steps">
       <div class="step">
         <div class="step-day"><div class="step-day-num">Day 1</div><div class="step-channel">📧 Email</div></div>
@@ -157,18 +157,18 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
         </div>
       </div>
       <div class="step">
-        <div class="step-day"><div class="step-day-num">Day 3</div><div class="step-channel">💬 SMS</div></div>
+        <div class="step-day"><div class="step-day-num">Day 3</div><div class="step-channel">📧 Email</div></div>
         <div class="step-body">
           <h4>Quick text nudge</h4>
-          <p>A short SMS — nobody ignores a text. "Hi [Name], just a quick reminder about your invoice…"</p>
+          <p>A short, direct nudge. "Hi [Name], just a quick reminder about your invoice…"</p>
           <span class="step-tag tag-friendly">Friendly</span>
         </div>
       </div>
       <div class="step">
-        <div class="step-day"><div class="step-day-num">Day 7</div><div class="step-channel">📱 WhatsApp</div></div>
+        <div class="step-day"><div class="step-day-num">Day 7</div><div class="step-channel">📧 Email</div></div>
         <div class="step-body">
-          <h4>WhatsApp follow-up</h4>
-          <p>WhatsApp messages get 90% open rates vs 20% for email. We send one more direct message with the payment link.</p>
+          <h4>Firmer follow-up</h4>
+          <p>One more direct message with the payment link, and a clear note about what happens next.</p>
           <span class="step-tag tag-wa">90% open rate</span>
         </div>
       </div>
@@ -212,8 +212,8 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
     </div>
     <div class="feat">
       <div class="feat-icon">📱</div>
-      <h3>WhatsApp included</h3>
-      <p>Pro and Business plans include WhatsApp messages — the highest-response channel available.</p>
+      <h3>One flat rate</h3>
+      <p>No per-email charges and no usage limits — the monthly rate is the whole cost.</p>
     </div>
     <div class="feat">
       <div class="feat-icon">🔒</div>
@@ -229,6 +229,7 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
     <div class="section-label">Pricing</div>
     <h2>Simple, flat pricing</h2>
     <p style="color:#6B7280;font-size:16px;line-height:1.7;margin-top:8px">No per-email fees. No usage limits. Just a flat monthly rate.</p>
+    <div style="max-width:620px;margin:18px auto 0;padding:14px 18px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;color:#92400E;font-size:14px;line-height:1.7;text-align:left"><strong>🚧 Not open yet.</strong> The automatic reminders are still being built, so we are not taking payment and these prices are what we intend to charge, not an offer. You can create an account and connect Stripe now to see your overdue invoices; nothing is sent to your clients until we say so. Want to know when it opens? <a href="mailto:support@niledreamsdigital.com?subject=Tell%20me%20when%20Dunning%20Assistant%20opens" style="color:#92400E;font-weight:700">Email us</a>.</div>
     <div class="pricing-grid">
 
       <div class="plan starter">
@@ -238,26 +239,25 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
         <ul>
           <li>Up to 25 clients</li>
           <li>Email reminders (4-step)</li>
-          <li>SMS reminders</li>
           <li>Stripe integration</li>
           <li>Recovery dashboard</li>
         </ul>
-        <button class="plan-btn" style="background:#F3F4F6;color:#374151;border:none;cursor:pointer;width:100%" onclick="openAuth('signup')">Get Started</button>
+        <button class="plan-btn" style="background:#F3F4F6;color:#374151;border:none;cursor:pointer;width:100%" onclick="openAuth('signup')">Create a free account</button>
       </div>
 
       <div class="plan popular">
         <div class="popular-badge">Most Popular</div>
         <div class="plan-name">Pro</div>
         <div class="plan-price">$49<span>/mo</span></div>
-        <div class="plan-desc">Up to 100 clients + WhatsApp. For growing agencies.</div>
+        <div class="plan-desc">Up to 100 clients, with custom templates. For growing agencies.</div>
         <ul>
           <li>Up to 100 clients</li>
-          <li>Email + SMS + <strong>WhatsApp</strong></li>
+          <li>Custom sending schedule</li>
           <li>Custom message templates</li>
           <li>Multiple Stripe accounts</li>
           <li>Priority support</li>
         </ul>
-        <button class="plan-btn" style="border:none;cursor:pointer;width:100%" onclick="openAuth('signup')">Get Started</button>
+        <button class="plan-btn" style="border:none;cursor:pointer;width:100%" onclick="openAuth('signup')">Create a free account</button>
       </div>
 
       <div class="plan">
@@ -266,12 +266,12 @@ footer a{color:#9CA3AF;text-decoration:none;margin:0 10px}
         <div class="plan-desc">Unlimited clients. For consultancies and agencies.</div>
         <ul>
           <li>Unlimited clients</li>
-          <li>Email + SMS + WhatsApp</li>
+          <li>Custom sending schedule</li>
           <li>White-label emails</li>
           <li>API access</li>
           <li>Dedicated support</li>
         </ul>
-        <button class="plan-btn" style="border:none;cursor:pointer;width:100%" onclick="openAuth('signup')">Get Started</button>
+        <button class="plan-btn" style="border:none;cursor:pointer;width:100%" onclick="openAuth('signup')">Create a free account</button>
       </div>
 
     </div>

@@ -222,6 +222,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let _currentUser = null;
 let _tenantId = null;
 
+// Unused while paid plans are closed. Kept so reopening billing is one edit:
+// put these back on the plan buttons, via patchBillingLinks so each carries
+// client_reference_id.
 const STRIPE_PLANS = {
   starter: 'https://buy.stripe.com/00wbIU2zyds16SJ4Wf18c04',
   pro:     'https://buy.stripe.com/fZudR26PO9bLa4Vagz18c03',
@@ -695,6 +698,10 @@ function renderCharts(events) {
 }
 
 // ─── AUTH + BILLING HELPERS ────────────────────────────────────
+// Paid plans are switched off until the reminder sender exists, so there are no
+// .billing-link elements to patch. Kept because it is wired into the auth callbacks,
+// and because the Stripe links go back in here when billing reopens — each one needs
+// client_reference_id so stripe-webhook can tell which tenant paid.
 function patchBillingLinks(user) {
   const params = '?client_reference_id=' + encodeURIComponent(user.id)
     + '&prefilled_email=' + encodeURIComponent(user.email);
@@ -778,26 +785,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     <button onclick="closeBilling()" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
     <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:8px">UPGRADE YOUR PLAN</div>
     <h2 style="font-size:22px;font-weight:800;margin-bottom:6px;color:var(--text)">Choose a plan</h2>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:28px">All plans include email · SMS · auto-stop on payment. <a href="mailto:support@niledreamsdigital.com" style="color:var(--accent)">Questions?</a></p>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:28px">Paid plans are not open yet — automatic reminders are still being built, so there is nothing to charge for. Email <a href="mailto:support@niledreamsdigital.com" style="color:var(--accent)">support@niledreamsdigital.com</a> and we will tell you the moment they are live.</p>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px">
         <div style="font-size:11px;font-weight:800;color:var(--text2);letter-spacing:.5px;margin-bottom:6px">STARTER</div>
         <div style="font-size:28px;font-weight:900;color:var(--text);margin-bottom:4px">$19<span style="font-size:13px;color:var(--text2);font-weight:400">/mo</span></div>
-        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Up to 25 clients<br>Email + SMS</div>
-        <a class="billing-link" data-base="https://buy.stripe.com/00wbIU2zyds16SJ4Wf18c04" href="https://buy.stripe.com/00wbIU2zyds16SJ4Wf18c04" target="_blank" rel="noopener" style="display:block;text-align:center;padding:10px;background:rgba(94,234,212,.1);border:1px solid var(--accent);color:var(--accent);border-radius:8px;font-size:13px;font-weight:700;text-decoration:none">Get Starter</a>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Up to 25 clients<br>Email reminders</div>
+        <div style="display:block;text-align:center;padding:10px;background:var(--surface);border:1px dashed var(--border);color:var(--text2);border-radius:8px;font-size:13px;font-weight:700">Not yet available</div>
       </div>
       <div style="background:var(--surface);border:2px solid var(--accent);border-radius:12px;padding:20px;position:relative">
         <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--bg);padding:3px 12px;border-radius:20px;font-size:10px;font-weight:800">POPULAR</div>
         <div style="font-size:11px;font-weight:800;color:var(--accent);letter-spacing:.5px;margin-bottom:6px">PRO</div>
         <div style="font-size:28px;font-weight:900;color:var(--text);margin-bottom:4px">$49<span style="font-size:13px;color:var(--text2);font-weight:400">/mo</span></div>
-        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Up to 100 clients<br>Email + SMS + WhatsApp</div>
-        <a class="billing-link" data-base="https://buy.stripe.com/fZudR26PO9bLa4Vagz18c03" href="https://buy.stripe.com/fZudR26PO9bLa4Vagz18c03" target="_blank" rel="noopener" style="display:block;text-align:center;padding:10px;background:var(--accent);color:var(--bg);border-radius:8px;font-size:13px;font-weight:700;text-decoration:none">Upgrade to Pro</a>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Up to 100 clients<br>Email reminders</div>
+        <div style="display:block;text-align:center;padding:10px;background:var(--surface);border:1px dashed var(--border);color:var(--text2);border-radius:8px;font-size:13px;font-weight:700">Not yet available</div>
       </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px">
         <div style="font-size:11px;font-weight:800;color:var(--text2);letter-spacing:.5px;margin-bottom:6px">BUSINESS</div>
         <div style="font-size:28px;font-weight:900;color:var(--text);margin-bottom:4px">$99<span style="font-size:13px;color:var(--text2);font-weight:400">/mo</span></div>
         <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">Unlimited clients<br>White-label + API</div>
-        <a class="billing-link" data-base="https://buy.stripe.com/bJefZaa209bLa4V9cv18c00" href="https://buy.stripe.com/bJefZaa209bLa4V9cv18c00" target="_blank" rel="noopener" style="display:block;text-align:center;padding:10px;background:rgba(94,234,212,.1);border:1px solid var(--accent);color:var(--accent);border-radius:8px;font-size:13px;font-weight:700;text-decoration:none">Get Business</a>
+        <div style="display:block;text-align:center;padding:10px;background:var(--surface);border:1px dashed var(--border);color:var(--text2);border-radius:8px;font-size:13px;font-weight:700">Not yet available</div>
       </div>
     </div>
   </div>
